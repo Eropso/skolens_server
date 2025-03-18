@@ -1,8 +1,12 @@
 $computername = "PN-skoleserver"
 
-$ip = "192.168.1.100"
-$gateway = "192.168.1.1"
+$ip = "192.168.58.1"
+$gateway = "192.168.58.1"
 $length = 24
+
+$vSwitchName = "External"
+$netAdapterName = "Ethernet"
+$vlanID = 358
 
 $domain = "eropso.local"
 $ouName1 = elev
@@ -13,9 +17,14 @@ $domainParts = $domain.Split(".")
 $domainName = $domainParts[0]
 $domainSuffix = $domainParts[1]
 
+
 Rename-Computer -NewName $computername -Restart
 
-New-NetIPAddress -IPAddress $ip -PrefixLength $length -DefaultGateway $gateway
+New-NetIPAddress -IPAddress $ip -PrefixLength $length -DefaultGateway $gateway -InterfaceAlias "Ethernet"
+
+Set-NetAdapter -Name "Ethernet" -VlanID $vlanID
+
+
 
 $features = @(
     "AD-Domain-Services", 
@@ -24,6 +33,12 @@ $features = @(
     "Hyper-V")
 
 Install-WindowsFeature -Name $features -IncludeAllSubFeature -IncludeManagementTools -Restart
+
+
+New-VMSwitch -Name "VLAN-Switch" -NetAdapterName "Ethernet" -AllowManagementOS $true
+
+Set-VMNetworkAdapterVlan -VMNetworkAdapterName "Ethernet" -Access -VlanId 358
+
 
 Install-ADDSForest -DomainName $domain -InstallDNS 
 
