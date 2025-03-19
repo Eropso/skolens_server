@@ -1,6 +1,6 @@
 
 
-$domain1 = "kimrobbin"
+$domain1 = "skolen"
 $domain2 = "local"
 $domain = "$domain1.$domain2"
 $ouName = "users"

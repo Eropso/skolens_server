@@ -8,7 +8,7 @@ $vSwitchName = "External"
 $netAdapterName = "Ethernet"
 $vlanID = 358
 
-$domain = "eropso.local"
+$domain = "skole.local"
 $ouName1 = elev
 $ouName2 = laerer
 
@@ -22,8 +22,6 @@ Rename-Computer -NewName $computername -Restart
 
 New-NetIPAddress -IPAddress $ip -PrefixLength $length -DefaultGateway $gateway -InterfaceAlias "Ethernet"
 
-Set-NetAdapter -Name "Ethernet" -VlanID $vlanID
-
 
 
 $features = @(
@@ -35,10 +33,12 @@ $features = @(
 Install-WindowsFeature -Name $features -IncludeAllSubFeature -IncludeManagementTools -Restart
 
 
+
 New-VMSwitch -Name "VLAN-Switch" -NetAdapterName "Ethernet" -AllowManagementOS $true
 
 Set-VMNetworkAdapterVlan -VMNetworkAdapterName "Ethernet" -Access -VlanId 358
 
+Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses ("1.1.1.1","1.0.0.1")
 
 Install-ADDSForest -DomainName $domain -InstallDNS 
 
