@@ -1,13 +1,15 @@
 # Skriver variablerne som skal brukes til å oprette brukere i AD
-$domain1 = "skolen"
+$domain1 = "skole"
 $domain2 = "local"
 $domain = "$domain1.$domain2"
 $ouName1 = "laerer"
-$ouName2 = "elever"
+$ouName2 = "elev"
 
-$csvPath = "\TreyUsers.csv"
+
+# Path til CSV-fil med brukere
+$csvPath = "C:\Users\Administrator\Desktop\skolens_server\TreyUsers.csv"
  
-# Impoterer brukere fra CSV-fil
+# Impoterer brukere fra CSV-fil                                                                                                                                                                                                                 
 $users = Import-Csv -Path $csvPath
 
 # For hver bruker i CSV-filen
