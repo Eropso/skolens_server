@@ -1,73 +1,70 @@
-#Variabler for scriptet for mer oversikt
+# Variabler for scriptet for mer oversikt
 
 $computername = "PN-skoleserver"
 
+# Nettverksinnstillinger
 $ip = "192.168.58.2"
 $gateway = "192.168.58.1"
 $length = 24
 
-$vSwitchName = "External"
+# Hyper-V og VLAN
+$vSwitchName = "VLAN-Switch"
 $netAdapterName = "Ethernet"
 $vlanID = 358
 
-$ouName1 = elev
-$ouName2 = laerer
+# DHCP-innstillinger
+$dhcpScopeName = "SkoleNettverk"
+$dhcpStartRange = "192.168.58.100"
+$dhcpEndRange = "192.168.58.200"
+$dhcpSubnetMask = "255.255.255.0"
+$opnSense = "192.168.58.99"
+$dhcpScopeId = "192.168.58.0"
 
-$domainName = skole
-$domainSuffix = local
+# Organisatoriske enheter
+$ouName1 = "Elev"
+$ouName2 = "Laerer"
 
+# Domeneinnstillinger
+$domainName = "skole"
+$domainSuffix = "local"
 $domain = "$domainName.$domainSuffix"
 
 
+# Scriptet for å sette opp serveren
 
-
-#Scriptet for å sette opp serveren
-
-#Setter navn på serveren
+# Setter navn på serveren
 Rename-Computer -NewName $computername
 
-#Setter IP-adresse, gateway og subnet
-New-NetIPAddress -IPAddress $ip -PrefixLength $length -DefaultGateway $gateway -InterfaceAlias "Ethernet"
+# Setter IP-adresse, gateway og subnet
+New-NetIPAddress -IPAddress $ip -PrefixLength $length -DefaultGateway $gateway -InterfaceAlias $netAdapterName
 
-
-#Installerer funksjoner og roller
+# Installerer funksjoner og roller
 $features = @(
     "AD-Domain-Services", 
     "DHCP", 
     "DNS", 
-    "Hyper-V")
-
+    "Hyper-V"
+)
 Install-WindowsFeature -Name $features -IncludeAllSubFeature -IncludeManagementTools
 
+# Lager en ny VM-switch og setter VLAN ID
+New-VMSwitch -Name $vSwitchName -NetAdapterName $netAdapterName -AllowManagementOS $true
+Set-VMNetworkAdapterVlan -VMNetworkAdapterName $netAdapterName -Access -VlanId $vlanID
 
-#Lager en ny VM-switch og setter VLAN ID
-New-VMSwitch -Name "VLAN-Switch" -NetAdapterName "Ethernet" -AllowManagementOS $true
+# Setter DNS-servere
+Set-DnsClientServerAddress -InterfaceAlias $netAdapterName -ServerAddresses $opnSense
 
-Set-VMNetworkAdapterVlan -VMNetworkAdapterName "Ethernet" -Access -VlanId 358
-#Hvis du har problemer med å sette VLAN ID slik jeg gjorde, kan du gå inn i Hyper-V Manager og sette det manuelt der.
-
-
-
-
-#Setter DNS-servere
-Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses ("1.1.1.1","1.0.0.1")
-
-#Setter DNS-suffiks
+# Konfigurerer DHCP-server
 Add-DhcpServerInDC
+Add-DhcpServerv4Scope -Name $dhcpScopeName -StartRange $dhcpStartRange -EndRange $dhcpEndRange -SubnetMask $dhcpSubnetMask
+Set-DhcpServerV4OptionValue -ScopeId $dhcpScopeId -OptionId 6 -Value $opnSense
 
-Add-DhcpServerv4Scope -Name "SkoleNettverk" -StartRange 192.168.58.100 -EndRange 192.168.58.200 -SubnetMask 255.255.255.0
+# Setter opp domenet
+Install-ADDSForest -DomainName $domain -InstallDNS
 
-Set-DhcpServerV4OptionValue -ScopeId 192.168.58.0 -OptionId 6 -Value 1.1.1.1, 1.0.0.1 
+# Lager OUs
+New-ADOrganizationalUnit -Name $ouName1 -Path "DC=$domainName,DC=$domainSuffix"
+New-ADOrganizationalUnit -Name $ouName2 -Path "DC=$domainName,DC=$domainSuffix"
 
-
-#Setter opp domenet
-Install-ADDSForest -DomainName $domain -InstallDNS 
-
-#Lager OUs
-New-ADOrganizationalUnit -Name $ouName1 -Path “DC=$domainName,DC=$domainSuffix"
-
-New-ADOrganizationalUnit -Name $ouName2 -Path “DC=$domainName,DC=$domainSuffix"
-
-
-
+# Restarter serveren
 Restart-Computer
