@@ -24,7 +24,7 @@ $domain = "$domainName.$domainSuffix"
 #Scriptet for å sette opp serveren
 
 #Setter navn på serveren
-Rename-Computer -NewName $computername -Restart
+Rename-Computer -NewName $computername
 
 #Setter IP-adresse, gateway og subnet
 New-NetIPAddress -IPAddress $ip -PrefixLength $length -DefaultGateway $gateway -InterfaceAlias "Ethernet"
@@ -37,13 +37,17 @@ $features = @(
     "DNS", 
     "Hyper-V")
 
-Install-WindowsFeature -Name $features -IncludeAllSubFeature -IncludeManagementTools -Restart
+Install-WindowsFeature -Name $features -IncludeAllSubFeature -IncludeManagementTools
 
 
 #Lager en ny VM-switch og setter VLAN ID
 New-VMSwitch -Name "VLAN-Switch" -NetAdapterName "Ethernet" -AllowManagementOS $true
 
 Set-VMNetworkAdapterVlan -VMNetworkAdapterName "Ethernet" -Access -VlanId 358
+#Hvis du har problemer med å sette VLAN ID slik jeg gjorde, kan du gå inn i Hyper-V Manager og sette det manuelt der.
+
+
+
 
 #Setter DNS-servere
 Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses ("1.1.1.1","1.0.0.1")
@@ -66,5 +70,4 @@ New-ADOrganizationalUnit -Name $ouName2 -Path “DC=$domainName,DC=$domainSuffix
 
 
 
-
-
+Restart-Computer

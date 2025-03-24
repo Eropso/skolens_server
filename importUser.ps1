@@ -1,6 +1,6 @@
 # Skriver variablerne som skal brukes til å oprette brukere i AD
-$domain1 = "skole"
-$domain2 = "local"
+$domainName = "skole"
+$domainSuffix = "local"
 $domain = "$domain1.$domain2"
 $ouName1 = "laerer"
 $ouName2 = "elev"
@@ -23,9 +23,9 @@ foreach ($user in $users) {
     
     # Setter OU basert på brukerens rolle
     if ($userRole -eq "Teacher") {
-        $ouPath = "OU=$ouName1,DC=$domain1,DC=$domain2" 
+        $ouPath = "OU=$ouName1,DC=$domainName,DC=$domainSuffix" 
     } else {
-        $ouPath = "OU=$ouName2,DC=$domain1,DC=$domain2"
+        $ouPath = "OU=$ouName2,DC=$domainName,DC=$domainSuffix"
     }
     
     $userPassword = ConvertTo-SecureString "IMKuben1337!" -AsPlainText -Force
